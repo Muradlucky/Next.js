@@ -1,0 +1,491 @@
+<style>
+.tt{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans)}
+.tt-head h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0}
+.tt-take{color:var(--color-fg-muted);font-size:var(--cds-font-size-body);margin:var(--cds-gap-xs) 0 0;max-width:60rem}
+.tt-take .tt-v{color:var(--color-fg);font-variant-numeric:tabular-nums}
+.tt .tt-take b{font-weight:600}
+.tt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9.5rem),1fr));gap:var(--cds-gap-md)}
+.tt-kpi,.tt-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);position:relative;min-width:0}
+.tt-kpi .lab{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.tt-kpi .num{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;margin-top:var(--cds-gap-xs);min-height:1.2em}
+.tt-kpi .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-top:var(--cds-gap-xs)}
+.tt-kpi.accent .num{color:var(--color-warn)}
+.tt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.tt-card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.tt-note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
+.tt-chart{min-height:12rem;display:flex;flex-direction:column;gap:var(--cds-gap-sm)}
+.tt-row{display:flex;flex-direction:column;gap:var(--cds-gap-xs)}
+.tt-row .top{display:flex;justify-content:space-between;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption)}
+.tt-row .top .v{color:var(--color-fg-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tt-track{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--cds-chart-grid)}
+.tt-seg{height:100%;min-width:2px}
+.tt-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm) var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-xs)}
+.tt-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tt-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);display:none;z-index:2;max-width:16rem}
+.tt-tip .h{color:var(--cds-text-secondary);margin-bottom:2px}
+.tt-tbl-wrap{overflow:auto;max-height:26rem}
+.tt table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.tt th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.tt td{padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);vertical-align:top}
+.tt th.n,.tt td.n{text-align:right}
+.tt td.t{min-width:14rem}
+.tt-fail{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);min-height:6rem}
+.tt-fail i{width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad);display:inline-block}
+.tt-empty{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);padding:var(--cds-pad-sm) 0}
+@media (max-width:40rem){.tt .hide-narrow{display:none}}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+[data-dash-source-state=empty]{color:transparent}
+.tt-signal{display:flex;align-items:center;gap:var(--cds-gap-md);margin-top:var(--cds-gap-md);padding:var(--cds-pad-lg);background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius)}
+.tt-lamp{width:3rem;height:3rem;border-radius:50%;flex:none;background:var(--cds-chart-muted)}
+.tt-lamp[data-light=green]{background:var(--color-ok)}
+.tt-lamp[data-light=yellow]{background:var(--color-warn)}
+.tt-lamp[data-light=red]{background:var(--color-bad)}
+.tt-signal .big{font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-title);line-height:1.1}
+.tt-signal .why{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-top:var(--cds-gap-xs)}
+.tt-kpi.red .num{color:var(--color-bad)}
+.tt-kpi.yellow .num{color:var(--color-warn)}
+.tt-kpi.green .num{color:var(--color-ok)}
+.tt-rules{font-size:var(--cds-font-size-caption);display:flex;flex-direction:column;gap:var(--cds-gap-sm)}
+.tt-rules .r{display:grid;grid-template-columns:1.25rem 1fr;gap:var(--cds-gap-xs)}
+.tt-rules .h{font-weight:600}
+.tt-rules p{margin:0;color:var(--color-fg-muted)}
+.tt-dot{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:6px;vertical-align:0;background:var(--cds-chart-muted)}
+.tt-dot.red{background:var(--color-bad)}.tt-dot.yellow{background:var(--color-warn)}.tt-dot.green{background:var(--color-ok)}
+</style>
+
+<div class="tt">
+  <header class="tt-head" id="top">
+    <h1>Пульт TickTick</h1>
+    <div class="tt-signal" id="signal" data-fetchpriority="high">
+      <div class="tt-lamp" id="lamp"></div>
+      <div>
+        <div class="big" data-source="kpi" data-field="lightLabel" data-row="0">—</div>
+        <div class="why" id="signal-why">Красных карточек — <b data-source="kpi" data-field="red" data-row="0">—</b>, жёлтых — <b data-source="kpi" data-field="yellow" data-row="0">—</b>. Хуже всех доска <b data-source="kpi" data-field="worstBoard" data-row="0">—</b>.</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="tt-kpis" id="kpis" data-fetchpriority="high">
+    <div class="tt-kpi red"><div class="lab">Красные карточки</div><div class="num dash-skeleton" data-source="kpi" data-field="red" data-row="0">—</div><div class="sub">всё плохо — решить сегодня</div></div>
+    <div class="tt-kpi yellow"><div class="lab">Жёлтые карточки</div><div class="num dash-skeleton" data-source="kpi" data-field="yellow" data-row="0">—</div><div class="sub">проблема назревает</div></div>
+    <div class="tt-kpi"><div class="lab">Ждут тебя</div><div class="num dash-skeleton" data-source="kpi" data-field="waiting" data-row="0">—</div><div class="sub">approval, blocked, приёмка</div></div>
+    <div class="tt-kpi"><div class="lab">Закрыто · 7 дней</div><div class="num dash-skeleton" data-source="kpi" data-field="done7" data-row="0">—</div><div class="sub">по всем доскам</div></div>
+    <div class="tt-kpi"><div class="lab">В работе</div><div class="num dash-skeleton" data-source="kpi" data-field="progress" data-row="0">—</div><div class="sub">столбец In Progress</div></div>
+    <div class="tt-kpi"><div class="lab">Срок прошёл</div><div class="num dash-skeleton" data-source="kpi" data-field="overdue" data-row="0">—</div><div class="sub">дата карточки позади</div></div>
+  </section>
+
+  <section class="tt-grid" id="lights">
+    <div class="tt-card" id="board-lights">
+      <h2>Светофор досок</h2>
+      <p class="tt-note">Сейчас · по каждой доске: сколько красных и жёлтых карточек</p>
+      <div class="tt-tbl-wrap">
+        <table data-source="by_board" data-row-key="board">
+          <thead><tr><th data-field="lightLabel">Сигнал</th><th data-field="board">Доска</th><th class="n" data-field="red">🔴</th><th class="n" data-field="yellow">🟡</th><th class="n" data-field="total">Открыто</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="tt-card" id="rules">
+      <h2>Как горит светофор</h2>
+      <p class="tt-note">Дни — без правок карточки. Repeat, On hold, Done и Cancelled не считаются.</p>
+      <div class="tt-rules">
+        <div class="r"><span class="tt-dot green"></span><div><div class="h">Зелёный — всё по норме</div><p>Решение ждёт тебя меньше 2 дней, срок не прошёл, карточка в работе двигается.</p></div></div>
+        <div class="r"><span class="tt-dot yellow"></span><div><div class="h">Жёлтый — проблема назревает</div><p>Ждёт тебя 2–4 дня (правило 48 ч: Claude должен был сделать по рекомендации) · срок прошёл 1–2 дня · в работе без правок 3–6 дней.</p></div></div>
+        <div class="r"><span class="tt-dot red"></span><div><div class="h">Красный — всё плохо</div><p>Ждёт тебя 5+ дней · срок прошёл 3+ дня · в работе без правок 7+ дней.</p></div></div>
+        <p>Доска: красная — 2+ красных карточки; жёлтая — 1 красная или любая жёлтая. Весь пульт: красный — 2+ красных доски или 5+ красных карточек; жёлтый — есть хоть один сигнал.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="tt-card" id="alerts">
+    <h2>Красное и жёлтое — что разобрать</h2>
+    <p class="tt-note">Красные сверху, внутри — дольше всех стоящие</p>
+    <div class="tt-tbl-wrap">
+      <table data-source="alerts" data-row-key="id">
+        <thead><tr><th data-field="lightLabel">Сигнал</th><th data-field="board">Доска</th><th data-field="title">Карточка</th><th data-field="why">Почему</th><th class="n" data-field="days">Дней</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="tt-grid" id="directions">
+    <div class="tt-card" id="attention">
+      <h2>Куда уходит внимание</h2>
+      <p class="tt-note">Последние 7 дней · обновлённые + закрытые карточки по направлениям</p>
+      <div class="tt-chart" id="attn-chart" data-source="by_direction"></div>
+      <div class="tt-tip" id="attn-tip"></div>
+    </div>
+    <div class="tt-card" id="stages">
+      <h2>Где лежат задачи</h2>
+      <p class="tt-note">Сейчас · открытые карточки по этапам канбана</p>
+      <div class="tt-legend" id="stage-legend"></div>
+      <div class="tt-chart" id="stage-chart" data-source="by_direction"></div>
+      <div class="tt-tip" id="stage-tip"></div>
+    </div>
+  </section>
+
+  <section class="tt-card" id="sprints">
+    <h2>Спринты</h2>
+    <p class="tt-note">Карточки «Sprint N» и «Ретро Sprint N» · дней без правок</p>
+    <div class="tt-tbl-wrap">
+      <table data-source="sprints" data-row-key="id">
+        <thead><tr><th data-field="board">Доска</th><th data-field="title">Спринт</th><th data-field="stageLabel">Этап</th><th class="n" data-field="idleDays">Дней</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="tt-card" id="boards">
+    <h2>Доски</h2>
+    <p class="tt-note">Открытые сейчас по этапам; движение и закрытия — за 7 дней</p>
+    <div class="tt-tbl-wrap">
+      <table data-source="by_board" data-row-key="board">
+        <thead><tr><th data-field="board">Доска</th><th class="hide-narrow" data-field="direction">Направление</th><th class="n" data-field="total">Открыто</th><th class="n hide-narrow" data-field="inbox">Inbox</th><th class="n hide-narrow" data-field="planned">Planned</th><th class="n" data-field="progress">В работе</th><th class="n" data-field="review">Приёмка</th><th class="n" data-field="touched7">В движении</th><th class="n" data-field="done7">Закрыто</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+// Окно «7 дней» считается от текущей даты по Бангкоку
+(() => {
+  const bkk = new Date(Date.now() + 7 * 3600e3);
+  const day = (d) => d.toISOString().slice(0, 10);
+  const start = new Date(bkk.getTime() - 7 * 864e5);
+  const end = new Date(bkk.getTime() + 864e5);
+  dash.setParams({ start: day(start) + 'T00:00:00+07:00', end: day(end) + 'T23:59:59+07:00' });
+})();
+
+const TT_BOARDS = ['general', 'ai_work', 'marketing', 'hop', 'torrefacto', 'scout', 'business', 'quantix', 'finance', 'home'];
+const ttProjectRows = ({ answer }) => {
+  const parse = (a) => {
+    if (a == null) return null;
+    if (typeof a === 'string') {
+      try { return JSON.parse(a); } catch (e) {
+        try { return JSON.parse('[' + a.replace(/}\s*\n\s*(?=\{)/g, '},') + ']'); } catch (e2) { throw new Error('TickTick: ' + a.slice(0, 200)); }
+      }
+    }
+    if (Array.isArray(a) && a.length && a[0] && typeof a[0].text === 'string') return a.map((x) => parse(x.text));
+    if (a && Array.isArray(a.content)) return parse(a.content.map((c) => c.text || '').join('\n'));
+    return a;
+  };
+  const o = parse(answer);
+  const res = Array.isArray(o) ? o.find((x) => x && Array.isArray(x.tasks)) : o;
+  if (!res || !Array.isArray(res.tasks)) throw new Error('TickTick не вернул список задач. Ключи ответа: ' + Object.keys((Array.isArray(o) ? o[0] : o) || {}).join(', '));
+  const fixT = (s) => (s ? String(s).replace(/([+-]\d\d)(\d\d)$/, '$1:$2') : '');
+  const name = res.project && res.project.name ? res.project.name : '';
+  return {
+    columns: ['id', 'projectId', 'board', 'title', 'column', 'kind', 'tags', 'priority', 'due', 'modified', 'created', 'parentId'],
+    rows: res.tasks.map((t) => ({
+      id: t.id, projectId: t.projectId || '', board: name, title: t.title || '', column: t.columnName || '',
+      kind: t.kind || '', tags: (t.tags || []).join(','), priority: t.priority || 0,
+      due: fixT(t.dueDate), modified: fixT(t.modifiedTime), created: fixT(t.createdTime), parentId: t.parentId || '',
+    })),
+  };
+};
+const ttDesc = 'Ответ TickTick (доска + её незакрытые карточки) как таблица: служебные поля карточки, даты в формате ISO; тексты карточек не берутся.';
+TT_BOARDS.forEach((id) => dash.loader(id, { description: ttDesc, fn: ttProjectRows }));
+
+dash.loader('done7', {
+  description: 'Закрытые карточки из ответа TickTick как таблица: доска (id), название, время закрытия.',
+  fn: ({ answer }) => {
+    const parse = (a) => {
+      if (a == null) return [];
+      if (typeof a === 'string') {
+        const s = a.trim();
+        if (!s || s === '[]') return [];
+        try { return JSON.parse(s); } catch (e) {
+          try { return JSON.parse('[' + s.replace(/}\s*\n\s*(?=\{)/g, '},') + ']'); } catch (e2) { throw new Error('TickTick: ' + s.slice(0, 200)); }
+        }
+      }
+      if (Array.isArray(a) && a.length && a[0] && typeof a[0].text === 'string') return a.map((x) => parse(x.text)).flat();
+      if (a && Array.isArray(a.content)) return parse(a.content.map((c) => c.text || '').join('\n'));
+      return a;
+    };
+    let o = parse(answer);
+    if (!Array.isArray(o)) o = o && Array.isArray(o.tasks) ? o.tasks : o && o.id ? [o] : [];
+    const fixT = (s) => (s ? String(s).replace(/([+-]\d\d)(\d\d)$/, '$1:$2') : '');
+    return {
+      columns: ['id', 'projectId', 'title', 'completed'],
+      rows: o.filter((t) => t && t.id).map((t) => ({ id: t.id, projectId: t.projectId || '', title: t.title || '', completed: fixT(t.completedTime) })),
+    };
+  },
+});
+
+dash.calc('open', {
+  title: 'Открытые карточки и их сигнал',
+  description: 'Все незакрытые карточки 10 досок: этап, направление, ждёт ли тебя, и цвет светофора по правилам на странице. Заметки не считаются.',
+  inputs: ['general', 'ai_work', 'marketing', 'hop', 'torrefacto', 'scout', 'business', 'quantix', 'finance', 'home'],
+  fn: (general, ai_work, marketing, hop, torrefacto, scout, business, quantix, finance, home) => {
+    const DIR = {
+      'General': 'General · спринт и жизнь', 'Ai Work': 'Система ИИ',
+      'Marketing': 'Mark · маркетинг', 'Hop n scotch': 'Mark · маркетинг', 'Torrefacto': 'Mark · маркетинг',
+      'Scout': 'Scout · бизнес и учёба', 'Business': 'Scout · бизнес и учёба',
+      'Quantix digital ltd': 'Quantix · агентство', 'Finance': 'Деньги', 'Thailand - home': 'Дом · Таиланд',
+    };
+    const LABEL = { inbox: 'Inbox', planned: 'Planned', progress: 'В работе', review: 'Приёмка', other: 'Прочее' };
+    const PAUSED = ['repeat', 'on hold', 'done', 'cancelled'];
+    const stageOf = (s) => (s === 'inbox' || s === 'входящие' || s === 'not sectioned' ? 'inbox'
+      : s === 'planned' ? 'planned' : s === 'in progress' ? 'progress' : s === 'review' ? 'review' : 'other');
+    const RANK = { green: 0, yellow: 1, red: 2 };
+    const now = Date.now();
+    return [].concat(general, ai_work, marketing, hop, torrefacto, scout, business, quantix, finance, home)
+      .filter((r) => r.kind !== 'NOTE')
+      .map((r) => {
+        const board = String(r.board).replace(/^[^\p{L}\p{N}]+/u, '').trim();
+        const col = (r.column || '').toLowerCase();
+        const stage = stageOf(col);
+        const paused = PAUSED.includes(col);
+        const tags = r.tags ? r.tags.split(',') : [];
+        const reason = tags.includes('approval') ? 'Согласование' : tags.includes('blocked') ? 'Блокер'
+          : stage === 'review' && !tags.includes('to-claude') && !tags.includes('to-gpt') ? 'Приёмка' : '';
+        const mod = Date.parse(r.modified);
+        const idleDays = isNaN(mod) ? 0 : Math.max(0, Math.floor((now - mod) / 864e5));
+        const due = r.due ? Date.parse(r.due) : NaN;
+        const lateDays = isNaN(due) ? 0 : Math.max(0, Math.floor((now - due) / 864e5));
+        const sig = [];
+        if (!paused) {
+          if (reason) sig.push([idleDays >= 5 ? 'red' : idleDays >= 2 ? 'yellow' : 'green', reason + ': ждёт тебя', idleDays]);
+          if (lateDays >= 1) sig.push([lateDays >= 3 ? 'red' : 'yellow', 'Срок прошёл', lateDays]);
+          if (stage === 'progress') sig.push([idleDays >= 7 ? 'red' : idleDays >= 3 ? 'yellow' : 'green', 'В работе без правок', idleDays]);
+        }
+        const worst = sig.reduce((a, s) => (RANK[s[0]] > RANK[a[0]] ? s : a), ['green', '', 0]);
+        return {
+          id: r.id, projectId: r.projectId, board, direction: DIR[board] || 'Прочее', title: r.title,
+          stage, stageLabel: LABEL[stage], reason, paused: paused ? 1 : 0,
+          light: worst[0], why: worst[1], days: worst[2],
+          touched7: now - mod < 7 * 864e5 ? 1 : 0, idleDays,
+          overdue: !paused && lateDays >= 1 ? 1 : 0,
+        };
+      });
+  },
+});
+
+dash.calc('by_board', {
+  title: 'Светофор и сводка по доскам',
+  description: 'По каждой доске: красные и жёлтые карточки, цвет доски, открытые по этапам, правили и закрыли за 7 дней.',
+  inputs: ['open', 'done7'],
+  fn: (open, done7) => {
+    const by = {};
+    const row = (r) => (by[r.board] = by[r.board] || { board: r.board, direction: r.direction, total: 0, inbox: 0, planned: 0, progress: 0, review: 0, other: 0, waiting: 0, touched7: 0, done7: 0, red: 0, yellow: 0 });
+    const boardOf = {};
+    open.forEach((r) => {
+      boardOf[r.projectId] = r;
+      const b = row(r);
+      b.total += 1; b[r.stage] += 1; b.touched7 += r.touched7; if (r.reason) b.waiting += 1;
+      if (r.light === 'red') b.red += 1; if (r.light === 'yellow') b.yellow += 1;
+    });
+    done7.forEach((d) => { const r = boardOf[d.projectId]; if (r) row(r).done7 += 1; });
+    const NAME = { red: '🔴 Красный', yellow: '🟡 Жёлтый', green: '🟢 Зелёный' };
+    return Object.values(by).map((b) => {
+      b.light = b.red >= 2 ? 'red' : b.red || b.yellow ? 'yellow' : 'green';
+      b.lightLabel = NAME[b.light];
+      return b;
+    }).sort((a, b) => b.red - a.red || b.yellow - a.yellow || b.total - a.total);
+  },
+});
+
+dash.calc('by_direction', {
+  title: 'Сводка по направлениям',
+  description: 'Доски сложены по направлениям; доля внимания — доля обновлённых и закрытых за 7 дней карточек.',
+  inputs: ['by_board'],
+  fn: (by_board) => {
+    const by = {};
+    by_board.forEach((b) => {
+      const d = (by[b.direction] = by[b.direction] || { direction: b.direction, total: 0, inbox: 0, planned: 0, progress: 0, review: 0, other: 0, waiting: 0, touched7: 0, done7: 0, attention: 0 });
+      ['total', 'inbox', 'planned', 'progress', 'review', 'other', 'waiting', 'touched7', 'done7'].forEach((k) => (d[k] += b[k]));
+      d.attention += b.touched7 + b.done7;
+    });
+    const rows = Object.values(by);
+    const sum = rows.reduce((s, d) => s + d.attention, 0) || 1;
+    rows.forEach((d) => (d.sharePct = Math.round((d.attention / sum) * 100)));
+    return rows.sort((a, b) => b.attention - a.attention || b.total - a.total);
+  },
+});
+
+dash.calc('kpi', {
+  title: 'Главный сигнал и цифры',
+  description: 'Цвет всего пульта по правилам на странице, число красных и жёлтых карточек, доска с худшим сигналом и итоги по всем доскам.',
+  inputs: ['open', 'by_board', 'done7'],
+  fn: (open, by_board, done7) => {
+    const ids = {};
+    open.forEach((r) => (ids[r.projectId] = 1));
+    const red = open.filter((r) => r.light === 'red').length;
+    const yellow = open.filter((r) => r.light === 'yellow').length;
+    const redBoards = by_board.filter((b) => b.light === 'red').length;
+    const light = redBoards >= 2 || red >= 5 ? 'red' : red || yellow ? 'yellow' : 'green';
+    const NAME = { red: 'Красный · всё плохо', yellow: 'Жёлтый · проблема назревает', green: 'Зелёный · всё по норме' };
+    const worst = by_board.length && (by_board[0].red || by_board[0].yellow) ? by_board[0].board : 'нет';
+    return [{
+      light, lightLabel: NAME[light], red, yellow, redBoards, worstBoard: worst,
+      total: open.length,
+      progress: open.filter((r) => r.stage === 'progress').length,
+      waiting: open.filter((r) => r.reason && !r.paused).length,
+      overdue: open.filter((r) => r.overdue).length,
+      done7: done7.filter((d) => ids[d.projectId]).length,
+    }];
+  },
+});
+
+dash.calc('alerts', {
+  title: 'Красное и жёлтое',
+  description: 'Карточки с красным или жёлтым сигналом и причина: ждёт тебя, срок прошёл или стоит в работе.',
+  inputs: ['open'],
+  fn: (open) => {
+    const NAME = { red: '🔴 Красный', yellow: '🟡 Жёлтый' };
+    return open.filter((r) => r.light !== 'green')
+      .map((r) => ({ id: r.id, light: r.light, lightLabel: NAME[r.light], board: r.board, title: r.title, why: r.why, days: r.days }))
+      .sort((a, b) => (a.light === b.light ? b.days - a.days : a.light === 'red' ? -1 : 1));
+  },
+});
+
+dash.calc('sprints', {
+  title: 'Спринты',
+  description: 'Открытые карточки, название которых начинается с «Sprint N» или «Ретро Sprint N».',
+  inputs: ['open'],
+  fn: (open) => open.filter((r) => /^(Ретро\s+)?Sprint\s+\d+/.test(r.title))
+    .map((r) => ({ id: r.id, board: r.board, title: r.title, stageLabel: r.stageLabel, idleDays: r.idleDays }))
+    .sort((a, b) => a.title.localeCompare(b.title)),
+});
+
+// ——— отрисовка
+const TT_STAGES = [['inbox', 'Inbox'], ['planned', 'Planned'], ['progress', 'В работе'], ['review', 'Приёмка'], ['other', 'Прочее']];
+const ttFmt = d3.format(',');
+const ttFailed = (s) => s === 'error' || s === 'declined' || s === 'missing' || s === 'connect';
+const ttFail = (el) => {
+  const box = document.createElement('div');
+  box.className = 'tt-fail';
+  box.append(document.createElement('i'), 'Не загрузилось');
+  el.replaceChildren(box);
+};
+const ttStageColor = (k) => (k === 'other' ? 'var(--cds-chart-muted)' : dash.colors[['inbox', 'planned', 'progress', 'review'].indexOf(k)]);
+
+const ttTip = (tipEl, card) => ({
+  show(ev, head, lines) {
+    const h = document.createElement('div'); h.className = 'h'; h.textContent = head;
+    tipEl.replaceChildren(h, ...lines.map((l) => { const d = document.createElement('div'); d.textContent = l; return d; }));
+    tipEl.style.display = 'block';
+    const cr = card.getBoundingClientRect();
+    let x = ev.clientX - cr.left + 12, y = ev.clientY - cr.top + 12;
+    x = Math.min(x, cr.width - tipEl.offsetWidth - 8);
+    tipEl.style.left = Math.max(8, x) + 'px';
+    tipEl.style.top = y + 'px';
+  },
+  hide() { tipEl.style.display = 'none'; },
+});
+const attnTip = ttTip(document.getElementById('attn-tip'), document.getElementById('attention'));
+const stageTip = ttTip(document.getElementById('stage-tip'), document.getElementById('stages'));
+
+const legend = document.getElementById('stage-legend');
+legend.replaceChildren(...TT_STAGES.map(([k, l]) => { const s = document.createElement('span'); const i = document.createElement('i'); i.style.background = ttStageColor(k); s.append(i, l); return s; }));
+
+const ttFillCells = () => {
+  document.querySelectorAll('[data-source][data-field][data-row]').forEach((el) => {
+    const d = dash.data(el.dataset.source);
+    if (d.status === 'ok') {
+      el.classList.remove('dash-skeleton');
+      const r = d.data[+el.dataset.row];
+      const v = r ? r[el.dataset.field] : null;
+      el.textContent = v == null ? '—' : typeof v === 'number' ? ttFmt(v) : String(v);
+    } else {
+      if (ttFailed(d.status)) el.classList.remove('dash-skeleton');
+      el.textContent = '—';
+    }
+  });
+};
+
+const ttAttention = () => {
+  const el = document.getElementById('attn-chart');
+  const d = dash.data('by_direction');
+  if (ttFailed(d.status)) return ttFail(el);
+  if (d.status !== 'ok') { el.replaceChildren(); el.classList.add('dash-skeleton'); return; }
+  el.classList.remove('dash-skeleton');
+  const max = d3.max(d.data, (r) => r.attention) || 1;
+  el.replaceChildren(...d.data.map((r, i) => {
+    const row = document.createElement('div'); row.className = 'tt-row';
+    const top = document.createElement('div'); top.className = 'top';
+    const n = document.createElement('span'); n.textContent = r.direction;
+    const v = document.createElement('span'); v.className = 'v'; v.textContent = ttFmt(r.attention) + ' · ' + r.sharePct + '%';
+    top.append(n, v);
+    const tr = document.createElement('div'); tr.className = 'tt-track';
+    const seg = document.createElement('div'); seg.className = 'tt-seg';
+    seg.style.width = (r.attention / max) * 100 + '%';
+    seg.style.background = i === 0 ? dash.colors[0] : 'var(--cds-chart-muted)';
+    if (!r.attention) seg.style.minWidth = '0';
+    tr.append(seg);
+    tr.addEventListener('mousemove', (ev) => attnTip.show(ev, r.direction, ['Правили карточек: ' + ttFmt(r.touched7), 'Закрыто: ' + ttFmt(r.done7), 'Доля внимания: ' + r.sharePct + '%']));
+    tr.addEventListener('mouseleave', () => attnTip.hide());
+    row.append(top, tr);
+    return row;
+  }));
+};
+
+const ttStages = () => {
+  const el = document.getElementById('stage-chart');
+  const d = dash.data('by_direction');
+  if (ttFailed(d.status)) return ttFail(el);
+  if (d.status !== 'ok') { el.replaceChildren(); el.classList.add('dash-skeleton'); return; }
+  el.classList.remove('dash-skeleton');
+  const rows = [...d.data].sort((a, b) => b.total - a.total);
+  const max = d3.max(rows, (r) => r.total) || 1;
+  el.replaceChildren(...rows.map((r) => {
+    const row = document.createElement('div'); row.className = 'tt-row';
+    const top = document.createElement('div'); top.className = 'top';
+    const n = document.createElement('span'); n.textContent = r.direction;
+    const v = document.createElement('span'); v.className = 'v'; v.textContent = ttFmt(r.total) + ' открыто';
+    top.append(n, v);
+    const tr = document.createElement('div'); tr.className = 'tt-track';
+    tr.style.background = 'transparent';
+    TT_STAGES.forEach(([k, l]) => {
+      if (!r[k]) return;
+      const seg = document.createElement('div'); seg.className = 'tt-seg';
+      seg.style.width = (r[k] / max) * 100 + '%';
+      seg.style.background = ttStageColor(k);
+      seg.addEventListener('mousemove', (ev) => stageTip.show(ev, r.direction, [l + ': ' + ttFmt(r[k]), 'Всего открыто: ' + ttFmt(r.total)]));
+      seg.addEventListener('mouseleave', () => stageTip.hide());
+      tr.append(seg);
+    });
+    row.append(top, tr);
+    return row;
+  }));
+};
+
+const ttTable = (id, key, emptyText) => document.querySelectorAll('table[data-source="' + id + '"]').forEach((table) => {
+  const tb = table.querySelector('tbody');
+  const cols = [...table.querySelectorAll('th')].map((th) => ({ f: th.dataset.field, cls: th.className }));
+  const d = dash.data(id);
+  const one = (content) => { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = cols.length; td.append(content); tr.append(td); return tr; };
+  if (ttFailed(d.status)) { const box = document.createElement('div'); ttFail(box); tb.replaceChildren(one(box)); return; }
+  if (d.status !== 'ok') { const s = document.createElement('div'); s.className = 'dash-skeleton'; s.textContent = '—'; tb.replaceChildren(one(s)); return; }
+  if (!d.data.length) { const e = document.createElement('div'); e.className = 'tt-empty'; e.textContent = emptyText; tb.replaceChildren(one(e)); return; }
+  tb.replaceChildren(...d.data.map((r) => {
+    const tr = document.createElement('tr');
+    tr.dataset.key = r[key];
+    cols.forEach((c) => {
+      const td = document.createElement('td');
+      td.className = c.cls + (c.f === 'title' ? ' t' : '');
+      const v = r[c.f];
+      td.textContent = typeof v === 'number' ? ttFmt(v) : v == null ? '' : String(v);
+      tr.append(td);
+    });
+    return tr;
+  }));
+});
+
+const ttLamp = () => {
+  const lamp = document.getElementById('lamp');
+  const d = dash.data('kpi');
+  lamp.dataset.light = d.status === 'ok' && d.data[0] ? d.data[0].light : '';
+};
+
+dash.onData(() => {
+  ttFillCells();
+  ttLamp();
+  ttAttention();
+  ttStages();
+  ttTable('by_board', 'board', 'Нет данных');
+  ttTable('alerts', 'id', 'Всё зелёное — разбирать нечего');
+  ttTable('sprints', 'id', 'Карточек «Sprint N» нет');
+});
+</script>
