@@ -35,3 +35,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# research: downloaded third-party repos (see research/video-tools/fetch.sh)
+research/video-tools/vendor/
